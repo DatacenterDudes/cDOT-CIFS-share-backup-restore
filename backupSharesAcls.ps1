@@ -1,22 +1,25 @@
 # Usage:
-# Run as: .\createSharesAcls.ps1 -server <mgmt_ip> -user <mgmt_user> -password <mgmt_user_password> -vserver <vserver name> -shareFile <xml file to get shares from > -aclFile <xml file to get acls from> -spit <none,less,more depending on info to print>
+# Run as: .\getSharesAcls.ps1 -server <mgmt_ip> -user <mgmt_user> -password <mgmt_user_password> -vserver <vserver name> -share <share name or * for all> -shareFile <xml file to store shares> -aclFile <xml file to store acls> -spit <none,less,more depending on info to print>
 #
 # Example
-# 1. If you want to save create back shares form xml file C:\share.xml and acls from xml file C:\acls.xml on vserver vs2, with less information displayed on the screen 
-# Run as:  .\createSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -shareFile C:\share.xml -aclFile C:\acl.xml -spit less 
+# 1. If you want to save only a single share on vserver vs2.
+# Run as: .\getSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -share test2 -shareFile C:\share.xml -aclFile C:\acl.xml -spit more 
 #
-# 2. If you only want to print the commands and not actually create the shares, use -printOnly 
-# Run as:  .\createSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -shareFile C:\share.xml -aclFile C:\acl.xml -spit less -printOnly true
+# 2. If you want to save all the shares on vserver vs2.
+# Run as: .\getSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -share * -shareFile C:\share.xml -aclFile C:\acl.xml -spit less
+#
+# 3. If you want to save only shares that start with "test" and share1 on vserver vs2.
+# Run as: .\getSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -share "test* | share1" -shareFile C:\share.xml -aclFile C:\acl.xml -spit more
 
 Param([parameter(Mandatory = $true)] [alias("s")] $server,
       [parameter(Mandatory = $true)] [alias("u")] $user,
       [parameter(Mandatory = $true)] [alias("p")] $password,
       [parameter(Mandatory = $true)] [alias("v")] $vserver,
+      [parameter(Mandatory = $true)] [alias("sh")] $share,
       [parameter(Mandatory = $true)] [alias("sf")] $shareFile,
       [parameter(Mandatory = $true)] [alias("af")] $aclFile,
-      [parameter(Mandatory = $true)] [alias("sp")] [Validateset("none","less","more")]$spit,
-      [alias("po")] [Validateset("false","true")] $printOnly = "false")
-            
+      [parameter(Mandatory = $true)] [alias("sp")] [Validateset("none","less","more")] $spit)
+
 Import-Module C:\Windows\system32\WindowsPowerShell\v1.0\Modules\DataONTAP
 
 $passwd = ConvertTo-SecureString $password -AsPlainText -Force
@@ -24,204 +27,36 @@ $cred = New-Object -typename System.Management.Automation.PSCredential -Argument
 $nctlr = Connect-NcController $server -Credential $cred
 $nodesinfo = @{}
 
-$new_shares = Import-Clixml -Path $shareFile
+#Get all the shares and export to file
+Get-NcCifsShare -Controller $nctlr -VserverContext $vserver -Name $share | Export-Clixml $shareFile
 
+#Get all the acls and export to file
+Get-NcCifsShareAcl -Controller $nctlr -VserverContext $vserver -Share $share | Export-Clixml $aclFile
+
+#Display Shares and Acls saved
 if ($spit -ne "none")
 {
-    echo "====================================================================================="
-    echo "SHARES"
-    echo "====================================================================================="
-
-    if ($spit -eq "less")
+    echo "`n************************SHARES START*****************************************"
+    if ($spit -eq "more")
     {
-        $new_shares
-    } 
-    elseif ($spit -eq "more")
-    {
-        $new_shares | Format-List
+        Import-Clixml $shareFile | Format-List
     }
-}
-echo "====================================================================================="
-
-$new_shares | foreach { 
-   $mycmd = "Add-NcCifsShare -VserverContext $vserver"
-
-   $myName = $_.ShareName
-
-    if (($myName -eq "admin$") -or ($myName -eq "c$") -or ($myName -eq "ipc$"))
+    else
     {
-        $mycmd = "Skip adding: " + $myName
-        if ($spit -ne "none")
-        {
-            $mycmd
-            echo "--------------------"
-        }
-        return
-    }     
-    
-    if (($myName -ne $null) -and ($myName -ne ""))
+        Import-Clixml $shareFile
+    }
+    echo "************************SHARES END*****************************************`n"
+
+    echo "************************ACLS START*****************************************"
+    if ($spit -eq "more")
     {
-        $mycmd = $mycmd + " -Name ""$myName"""          
+        Import-Clixml $aclFile | Format-List
+    }
+    else
+    {
+        Import-Clixml $aclFile
     }
 
-    $myPath = $_.Path
-    if (($myPath -ne $null) -and ($myPath -ne ""))
-    {
-        $mycmd = $mycmd + " -Path ""$myPath"""
-    }
+    echo "************************ACLS END*****************************************"
 
-    $myComment = $_.Comment
-    if (($myComment -ne $null) -and ($myComment -ne ""))
-    {
-        $mycmd = $mycmd + " -Comment ""$myComment"""          
-    }
-
-    $myShareProperties = $_.ShareProperties
-    if (($myShareProperties -ne $null) -and ($myShareProperties -ne ""))
-    {
-        $myShareProp = ""
-        foreach ($prop in $myShareProperties) {
-            if ($myShareProp -eq "")
-            {
-                $myShareProp = $prop
-            } 
-            else
-            {
-                $myShareProp = $myShareProp , $prop -join ','
-            }
-        }
-        $mycmd = $mycmd + " -ShareProperties ""$myShareProp"""          
-    }
-
-    $mySymlinkProperties = $_.SymlinkProperties
-    if (($mySymlinkProperties -ne $null) -and ($mySymlinkProperties -ne ""))
-    {
-        $mySymlinkProp = ""
-        foreach ($prop in $mySymlinkProperties) {
-            if ($mySymlinkProp -eq "")
-            {
-                $mySymlinkProp = $prop
-            } 
-            else
-            {
-                $mySymlinkProp = $mySymlinkProp , $prop -join ','
-            }
-        }    
-        $mycmd = $mycmd + " -SymlinkProperties ""$mySymlinkProp"""          
-    } 
-
-    $myFileUmask = $_.FileUmask
-    if (($myFileUmask -ne $null) -and ($myFileUmask -ne ""))
-    {
-        $mycmd = $mycmd + " -FileUmask ""$myFileUmask"""          
-    }
-
-    $myDirUmask = $_.DirUmask
-    if (($myDirUmask -ne $null) -and ($myDirUmask -ne ""))
-    {
-        $mycmd = $mycmd + " -DirUmask ""$myDirUmask"""          
-    }
-
-    $myOfflineFilesMode = $_.OfflineFilesMode
-    if (($myOfflineFilesMode -ne $null) -and ($myOfflineFilesMode -ne ""))
-    {
-        $mycmd = $mycmd + " -OfflineFilesMode ""$myOfflineFilesMode"""          
-    }
-
-    $myAttributeCacheTtl = $_.AttributeCacheTtl
-    if (($myAttributeCacheTtl -ne $null) -and ($myAttributeCacheTtl -ne ""))
-    {
-        $mycmd = $mycmd + " -AttributeCacheTtl ""$myAttributeCacheTtl"""          
-    }
-
-    $myVscanProfile = $_.VscanProfile
-    if (($myVscanProfile -ne $null) -and ($myVscanProfile -ne ""))
-    {
-        $mycmd = $mycmd + " -VscanProfile ""$myVscanProfile"""          
-    }  
-
-    if ($spit -ne "none")
-    {
-        $mycmd
-        echo "--------------------"
-    }
-
-    if ($printOnly -eq "false")
-    {
-        Invoke-Expression $mycmd
-        Remove-NcCifsShareAcl -VserverContext $vserver -Share $myName -UserOrGroup Everyone 
-    }
-}
-
-$new_acls = Import-Clixml -Path $aclFile
-
-
-if ($spit -ne "none")
-{
-    echo "====================================================================================="
-    echo "ACLS"
-    echo "====================================================================================="
-
-    if ($spit -eq "less")
-    {
-        $new_acls
-    } 
-    elseif ($spit -eq "more")
-    {
-        $new_acls | Format-List
-    }
-    echo "====================================================================================="
-}
-
-
-
-$new_acls | foreach { 
-    $mycmd = "Add-NcCifsShareAcl -VserverContext $vserver"
-    
-    $myShare = $_.Share
-
-    if (($myShare -eq "admin$") -or ($myShare -eq "ipc$") -or ($myShare -eq "c$"))
-    {
-        $myCmd = "Skip adding Acls for " + $myShare
-        if ($spit -ne "none")
-        {
-            $mycmd
-            echo "--------------------"
-        }
-        return
-    }
-   
-    if (($myShare -ne $null) -and ($myShare -ne ""))
-    {
-        $mycmd = $mycmd + " -Share ""$myShare"""          
-    }
-    
-    $myUserGroupType = $_.UserGroupType
-    if (($myUserGroupType -ne $null) -and ($myUserGroupType -ne ""))
-    {
-        $mycmd = $mycmd + " -UserGroupType ""$myUserGroupType"""
-    }
-
-    $myUserOrGroup = $_.UserOrGroup
-    if (($myUserOrGroup -ne $null) -and ($myUserOrGroup -ne ""))
-    {
-        $mycmd = $mycmd + " -UserOrGroup ""$myUserOrGroup"""
-    }
-
-    $myPermission = $_.Permission
-    if (($myPermission -ne $null) -and ($myPermission -ne ""))
-    {
-        $mycmd = $mycmd + " -Permission ""$myPermission"""          
-    }
-        
-    if ($spit -ne "none")
-    {
-        $mycmd
-        echo "--------------------"
-    }
-
-    if ($printOnly -eq "false")
-    {
-        Invoke-Expression $mycmd
-    }    
 }
