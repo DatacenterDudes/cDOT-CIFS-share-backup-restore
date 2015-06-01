@@ -1,12 +1,12 @@
 # Usage:
-# Run as: .\createSharesAcls.ps1 -server <mgmt_ip> -user <mgmt_user> -password <mgmt_user_password> -vserver <vserver name> -shareFile <xml file to get shares from > -aclFile <xml file to get acls from> -spit <none,less,more depending on info to print>
+# Run as: .\restoreSharesAcls.ps1 -server <mgmt_ip> -user <mgmt_user> -password <mgmt_user_password> -vserver <vserver name> -shareFile <xml file to get shares from > -aclFile <xml file to get acls from> -spit <none,less,more depending on info to print>
 #
 # Example
-# 1. If you want to save create back shares form xml file C:\share.xml and acls from xml file C:\acls.xml on vserver vs2, with less information displayed on the screen 
-# Run as:  .\createSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -shareFile C:\share.xml -aclFile C:\acl.xml -spit less 
+# 1. If you want to save create back shares from xml file C:\share.xml and acls from xml file C:\acls.xml on vserver vs2, with less information displayed on the screen 
+# Run as:  .\restoreSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -shareFile C:\share.xml -aclFile C:\acl.xml -spit less 
 #
 # 2. If you only want to print the commands and not actually create the shares, use -printOnly 
-# Run as:  .\createSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -shareFile C:\share.xml -aclFile C:\acl.xml -spit less -printOnly true
+# Run as:  .\restoreSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -shareFile C:\share.xml -aclFile C:\acl.xml -spit less -printOnly true
 
 Param([parameter(Mandatory = $true)] [alias("s")] $server,
       [parameter(Mandatory = $true)] [alias("u")] $user,
