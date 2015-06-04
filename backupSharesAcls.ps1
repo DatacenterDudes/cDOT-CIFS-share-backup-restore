@@ -10,6 +10,9 @@
 #
 # 3. If you want to save only shares that start with "test" and share1 on vserver vs2.
 # Run as: .\backupSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -share "test* | share1" -shareFile C:\share.xml -aclFile C:\acl.xml -spit more
+#
+# 4. If you want to save shares and ACLs into .csv format for examination.
+# Run as: .\backupSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -share *  -shareFile C:\shares.csv -aclFile C:\acl.csv -csv true -spit more
 
 Param([parameter(Mandatory = $true)] [alias("s")] $server,
       [parameter(Mandatory = $true)] [alias("u")] $user,
@@ -18,7 +21,8 @@ Param([parameter(Mandatory = $true)] [alias("s")] $server,
       [parameter(Mandatory = $true)] [alias("sh")] $share,
       [parameter(Mandatory = $true)] [alias("sf")] $shareFile,
       [parameter(Mandatory = $true)] [alias("af")] $aclFile,
-      [parameter(Mandatory = $true)] [alias("sp")] [Validateset("none","less","more")] $spit)
+      [parameter(Mandatory = $true)] [alias("sp")] [Validateset("none","less","more")] $spit,
+      [Validateset("false","true")] $csv = "false")
 
 Import-Module C:\Windows\system32\WindowsPowerShell\v1.0\Modules\DataONTAP
 
@@ -28,10 +32,19 @@ $nctlr = Connect-NcController $server -Credential $cred
 $nodesinfo = @{}
 
 #Get all the shares and export to file
-Get-NcCifsShare -Controller $nctlr -VserverContext $vserver -Name $share | Export-Clixml $shareFile
+if ($csv -eq "false") {
+    Get-NcCifsShare -Controller $nctlr -VserverContext $vserver -Name $share | Export-Clixml $shareFile
+} else {
+    Get-NcCifsShare -Controller $nctlr -VserverContext $vserver -Name $share | Export-Csv $shareFile
+}
+
 
 #Get all the acls and export to file
-Get-NcCifsShareAcl -Controller $nctlr -VserverContext $vserver -Share $share | Export-Clixml $aclFile
+if ($csv -eq "false") {
+    Get-NcCifsShareAcl -Controller $nctlr -VserverContext $vserver -Name $share | Export-Clixml $shareFile
+} else {
+    Get-NcCifsShareAcl -Controller $nctlr -VserverContext $vserver -Name $share | Export-Csv $shareFile
+}
 
 #Display Shares and Acls saved
 if ($spit -ne "none")
