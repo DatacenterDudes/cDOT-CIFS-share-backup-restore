@@ -41,9 +41,9 @@ if ($csv -eq "false") {
 
 #Get all the acls and export to file
 if ($csv -eq "false") {
-    Get-NcCifsShareAcl -Controller $nctlr -VserverContext $vserver -Name $share | Export-Clixml $shareFile
+    Get-NcCifsShareAcl -Controller $nctlr -VserverContext $vserver -Share $share | Export-Clixml $aclFile
 } else {
-    Get-NcCifsShareAcl -Controller $nctlr -VserverContext $vserver -Name $share | Export-Csv $shareFile
+    Get-NcCifsShareAcl -Controller $nctlr -VserverContext $vserver -Share $share | Export-Csv $aclFile
 }
 
 #Display Shares and Acls saved
