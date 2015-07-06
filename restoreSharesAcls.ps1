@@ -7,7 +7,9 @@
 #
 # 2. If you only want to print the commands and not actually create the shares, use -printOnly 
 # Run as:  .\restoreSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -shareFile C:\share.xml -aclFile C:\acl.xml -spit less -printOnly true
-
+#
+# This has been tested with the latest 8.2.x and 8.3.x cDOT releases.
+#
 Param([parameter(Mandatory = $true)] [alias("s")] $server,
       [parameter(Mandatory = $true)] [alias("u")] $user,
       [parameter(Mandatory = $true)] [alias("p")] $password,
@@ -17,7 +19,8 @@ Param([parameter(Mandatory = $true)] [alias("s")] $server,
       [parameter(Mandatory = $true)] [alias("sp")] [Validateset("none","less","more")]$spit,
       [alias("po")] [Validateset("false","true")] $printOnly = "false")
             
-Import-Module C:\Windows\system32\WindowsPowerShell\v1.0\Modules\DataONTAP
+# You need to install the latest DataONTAP Powershell Toolkit. You can find it here: http://mysupport.netapp.com/NOW/download/tools/powershell_toolkit/
+Import-Module DataONTAP
 
 $passwd = ConvertTo-SecureString $password -AsPlainText -Force
 $cred = New-Object -typename System.Management.Automation.PSCredential -ArgumentList $user, $passwd
@@ -89,8 +92,9 @@ $new_shares | foreach {
             {
                 $myShareProp = $myShareProp , $prop -join ','
             }
+#Corrected issue with double quotes breaking share properties in 8.3.1 - 7/6/2015
         }
-        $mycmd = $mycmd + " -ShareProperties ""$myShareProp"""          
+        $mycmd = $mycmd + " -ShareProperties $myShareProp          
     }
 
     $mySymlinkProperties = $_.SymlinkProperties
