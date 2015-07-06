@@ -13,6 +13,8 @@
 #
 # 4. If you want to save shares and ACLs into .csv format for examination.
 # Run as: .\backupSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -share *  -shareFile C:\shares.csv -aclFile C:\acl.csv -csv true -spit more
+# 
+# This has been tested with the latest 8.2.x and 8.3.x cDOT releases.
 
 Param([parameter(Mandatory = $true)] [alias("s")] $server,
       [parameter(Mandatory = $true)] [alias("u")] $user,
@@ -24,7 +26,8 @@ Param([parameter(Mandatory = $true)] [alias("s")] $server,
       [parameter(Mandatory = $true)] [alias("sp")] [Validateset("none","less","more")] $spit,
       [Validateset("false","true")] $csv = "false")
 
-Import-Module C:\Windows\system32\WindowsPowerShell\v1.0\Modules\DataONTAP
+# You need to install the latest DataONTAP Powershell Toolkit. You can find it here: http://mysupport.netapp.com/NOW/download/tools/powershell_toolkit/
+Import-Module DataONTAP
 
 $passwd = ConvertTo-SecureString $password -AsPlainText -Force
 $cred = New-Object -typename System.Management.Automation.PSCredential -ArgumentList $user, $passwd
@@ -33,17 +36,17 @@ $nodesinfo = @{}
 
 #Get all the shares and export to file
 if ($csv -eq "false") {
-    Get-NcCifsShare -Controller $nctlr -VserverContext $vserver -Name $share | Export-Clixml $shareFile
+    Get-NcCifsShare -Controller $nctlr -VserverContext $vserver -Share $share | Export-Clixml $shareFile
 } else {
-    Get-NcCifsShare -Controller $nctlr -VserverContext $vserver -Name $share | Export-Csv $shareFile
+    Get-NcCifsShare -Controller $nctlr -VserverContext $vserver -Share $share | Export-Csv $shareFile
 }
 
 
 #Get all the acls and export to file
 if ($csv -eq "false") {
-    Get-NcCifsShareAcl -Controller $nctlr -VserverContext $vserver -Name $share | Export-Clixml $shareFile
+    Get-NcCifsShareAcl -Controller $nctlr -VserverContext $vserver -Share $share | Export-Clixml $aclFile
 } else {
-    Get-NcCifsShareAcl -Controller $nctlr -VserverContext $vserver -Name $share | Export-Csv $shareFile
+    Get-NcCifsShareAcl -Controller $nctlr -VserverContext $vserver -Share $share | Export-Csv $aclFile
 }
 
 #Display Shares and Acls saved
