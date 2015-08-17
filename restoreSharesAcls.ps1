@@ -93,8 +93,9 @@ $new_shares | foreach {
                 $myShareProp = $myShareProp , $prop -join ','
             }
 #Corrected issue with double quotes breaking share properties in 8.3.1 - 7/6/2015
+#Added closing " to statement. oops. - 8/17/2015"
         }
-        $mycmd = $mycmd + " -ShareProperties $myShareProp          
+        $mycmd = $mycmd + " -ShareProperties $myShareProp"
     }
 
     $mySymlinkProperties = $_.SymlinkProperties
