@@ -1,4 +1,9 @@
-﻿Param([parameter(Mandatory = $true)] [alias("s")] $server,
+﻿# Usage:
+# Run as: .\mountAllVserverVolumes.ps1 -server <mgmt_ip> -user <mgmt_user> -password <mgmt_user_password> -vserver <vserver name> 
+#
+# Mount all volumes in the vserver, excluding volumes which cointain root in tha name (tipically vserver root volume)
+
+Param([parameter(Mandatory = $true)] [alias("s")] $server,
       [parameter(Mandatory = $true)] [alias("u")] $user,
       [parameter(Mandatory = $true)] [alias("p")] $password,
       [parameter(Mandatory = $true)] [alias("v")] $vserver)
@@ -17,5 +22,6 @@ get-ncVol -Vserver $vserver| foreach {
      if (($myVol -ne $null) -and ($myVol -ne "") -and ($myVol -notlike "*root*") )
     {
          Mount-NcVol -vservercontext  svm_nfs_02 -name $myVol -JunctionPath "/$myVol"
+ 
     }
 }
