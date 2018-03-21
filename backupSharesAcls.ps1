@@ -15,6 +15,8 @@
 # Run as: .\backupSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -share *  -shareFile C:\shares.csv -aclFile C:\acl.csv -csv true -spit more
 # 
 # This has been tested with the latest 8.2.x and 8.3.x cDOT releases.
+# This has been tested with the latest ONTAP 9.x release (3/21/18)
+# For details on running this script, see: https://whyistheinternetbroken.wordpress.com/2018/03/21/backing-up-restoring-ontap-smb-shares-with-powershell/
 
 Param([parameter(Mandatory = $true)] [alias("s")] $server,
       [parameter(Mandatory = $true)] [alias("u")] $user,
