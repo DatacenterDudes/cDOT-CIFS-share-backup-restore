@@ -9,6 +9,8 @@
 # Run as:  .\restoreSharesAcls.ps1 -server 10.53.33.59 -user admin -password netapp1! -vserver vs2 -shareFile C:\share.xml -aclFile C:\acl.xml -spit less -printOnly true
 #
 # This has been tested with the latest 8.2.x and 8.3.x cDOT releases.
+# This has been tested with the latest ONTAP 9.x release (3/21/18)
+# For details on running this script, see: https://whyistheinternetbroken.wordpress.com/2018/03/21/backing-up-restoring-ontap-smb-shares-with-powershell/
 #
 Param([parameter(Mandatory = $true)] [alias("s")] $server,
       [parameter(Mandatory = $true)] [alias("u")] $user,
