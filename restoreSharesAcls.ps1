@@ -113,8 +113,10 @@ $new_shares | foreach {
             {
                 $mySymlinkProp = $mySymlinkProp , $prop -join ','
             }
-        }    
-        $mycmd = $mycmd + " -SymlinkProperties ""$mySymlinkProp"""          
+        }
+# Double double quotes break Add-NcCifsShare when having multiple symlink
+# properties. Tested with PS toolkit 4.7 againt 9.3P8    
+        $mycmd = $mycmd + " -SymlinkProperties $mySymlinkProp"          
     } 
 
     $myFileUmask = $_.FileUmask
